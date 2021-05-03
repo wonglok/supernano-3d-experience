@@ -7,8 +7,10 @@ import { Shopify } from "./_app";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import {
   Box,
+  Cylinder,
   OrbitControls,
   Reflector,
+  Sphere,
   TorusKnot,
   useTexture,
 } from "@react-three/drei";
@@ -55,6 +57,16 @@ export function CollectionsOfProducts() {
   );
 }
 
+function RotateY({ children, speed = 1 }) {
+  let ref = useRef();
+
+  useFrame((st, dt) => {
+    ref.current.rotation.y += dt * speed;
+  });
+
+  return <group ref={ref}>{children}</group>;
+}
+
 function ReflectorScene({ mixBlur, depthScale, distortion, normalScale }) {
   const shop = useTexture("/textures/shop.png");
   const roughness = useTexture("/textures/roughness_floor.jpg");
@@ -89,7 +101,7 @@ function ReflectorScene({ mixBlur, depthScale, distortion, normalScale }) {
     <>
       <Reflector
         resolution={1024}
-        args={[10, 10]}
+        args={[40, 40]}
         mirror={0.9}
         mixBlur={mixBlur || 0}
         mixStrength={1}
@@ -114,7 +126,6 @@ function ReflectorScene({ mixBlur, depthScale, distortion, normalScale }) {
           />
         )}
       </Reflector>
-
       <Box
         args={[10, 10 / aspect, 0.2]}
         position={[0, 10 / aspect / 2 + 0.5, -3]}
@@ -122,14 +133,33 @@ function ReflectorScene({ mixBlur, depthScale, distortion, normalScale }) {
         <meshStandardMaterial map={shop} color="white" />
       </Box>
 
-      {/* <TorusKnot
-        frustumCulled={false}
-        args={[0.5, 0.2, 128, 32]}
-        ref={$box}
-        position={[0, 1, 0]}
-      >
-        <meshStandardMaterial color="hotpink" />
-      </TorusKnot> */}
+      <Cylinder args={[0.5, 0.5, 2, 32]} position={[0, 1.3, 0]}>
+        <meshStandardMaterial metalness={1} roughness={0.5} color="#bababa" />
+      </Cylinder>
+
+      <RotateY speed={1.5}>
+        <pointLight
+          distance={100}
+          decay={2}
+          position={[-2, 1.3, 0]}
+          color={"#ff00ff"}
+        >
+          <Sphere args={[0.15, 24, 32]}>
+            <meshStandardMaterial color={"#ff00ff"}></meshStandardMaterial>
+          </Sphere>
+        </pointLight>
+
+        <pointLight
+          distance={100}
+          decay={2}
+          position={[2, 1.3, 0]}
+          color={"#00ffff"}
+        >
+          <Sphere args={[0.15, 24, 32]}>
+            <meshStandardMaterial color={"#00ffff"}></meshStandardMaterial>
+          </Sphere>
+        </pointLight>
+      </RotateY>
 
       <spotLight
         intensity={1}
@@ -137,7 +167,6 @@ function ReflectorScene({ mixBlur, depthScale, distortion, normalScale }) {
         penumbra={1}
         angle={0.3}
       />
-
       <OrbitControls></OrbitControls>
     </>
   );
