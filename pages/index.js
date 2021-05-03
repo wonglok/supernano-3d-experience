@@ -7,6 +7,7 @@ import { Shopify } from "./_app";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import {
   Box,
+  CameraShake,
   Cylinder,
   OrbitControls,
   Reflector,
@@ -72,7 +73,7 @@ function ReflectorScene({ mixBlur, depthScale, distortion, normalScale }) {
   const roughness = useTexture("/textures/roughness_floor.jpg");
   const normal = useTexture("/textures/NORM.jpg");
   const distortionMap = useTexture("/textures/dist_map.jpg");
-  const $box = useRef(null);
+  const orbitCtrls = useRef(null);
   const _normalScale = useMemo(() => new Vector2(normalScale || 0), [
     normalScale,
   ]);
@@ -80,7 +81,7 @@ function ReflectorScene({ mixBlur, depthScale, distortion, normalScale }) {
   const { scene, camera } = useThree();
   useEffect(() => {
     camera.position.x = 0;
-    camera.position.y = 3;
+    camera.position.y = 1.3;
     camera.position.z = 5;
     scene.background = new Color("#000000");
   }, []);
@@ -91,6 +92,15 @@ function ReflectorScene({ mixBlur, depthScale, distortion, normalScale }) {
   }, [distortionMap]);
 
   useFrame(({ clock }) => {
+    let time = clock.getElapsedTime();
+    camera.position.x += Math.sin(time) * 0.0025;
+    camera.position.y += Math.sin(time) * Math.cos(time) * 0.0025;
+    camera.position.z += Math.cos(time) * 0.0025;
+
+    if (orbitCtrls.current) {
+      orbitCtrls.current.target.y = 1.3;
+    }
+
     // $box.current.position.y += Math.sin(clock.getElapsedTime()) / 25;
     // $box.current.rotation.y = clock.getElapsedTime() / 2;
   });
@@ -144,8 +154,12 @@ function ReflectorScene({ mixBlur, depthScale, distortion, normalScale }) {
           position={[-2, 1.3, 0]}
           color={"#ff00ff"}
         >
-          <Sphere args={[0.15, 24, 32]}>
-            <meshStandardMaterial color={"#ff00ff"}></meshStandardMaterial>
+          <Sphere args={[0.05, 24, 32]}>
+            <meshStandardMaterial
+              metalness={1}
+              roughness={0.0}
+              color={"#ff00ff"}
+            ></meshStandardMaterial>
           </Sphere>
         </pointLight>
 
@@ -155,8 +169,12 @@ function ReflectorScene({ mixBlur, depthScale, distortion, normalScale }) {
           position={[2, 1.3, 0]}
           color={"#00ffff"}
         >
-          <Sphere args={[0.15, 24, 32]}>
-            <meshStandardMaterial color={"#00ffff"}></meshStandardMaterial>
+          <Sphere args={[0.05, 24, 32]}>
+            <meshStandardMaterial
+              metalness={1}
+              roughness={0.0}
+              color={"#00ffff"}
+            ></meshStandardMaterial>
           </Sphere>
         </pointLight>
       </RotateY>
@@ -167,7 +185,8 @@ function ReflectorScene({ mixBlur, depthScale, distortion, normalScale }) {
         penumbra={1}
         angle={0.3}
       />
-      <OrbitControls></OrbitControls>
+
+      <OrbitControls ref={orbitCtrls}></OrbitControls>
     </>
   );
 }
