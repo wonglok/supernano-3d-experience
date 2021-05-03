@@ -4,7 +4,7 @@ import Head from "next/head";
 import { getAllCollections } from "nextjs-commerce-shopify";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Shopify } from "./_app";
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { Canvas, useFrame, useGraph, useThree } from "@react-three/fiber";
 import {
   Box,
   CameraShake,
@@ -13,6 +13,7 @@ import {
   Reflector,
   Sphere,
   TorusKnot,
+  useGLTF,
   useTexture,
 } from "@react-three/drei";
 import { Color, DoubleSide, RepeatWrapping, Vector2 } from "three";
@@ -112,7 +113,7 @@ function ReflectorScene({ mixBlur, depthScale, distortion, normalScale }) {
       <Reflector
         resolution={1024}
         args={[40, 40]}
-        mirror={0.9}
+        mirror={1.0}
         mixBlur={mixBlur || 0}
         mixStrength={1}
         rotation={[Math.PI * -0.5, 0, 0]}
@@ -126,7 +127,7 @@ function ReflectorScene({ mixBlur, depthScale, distortion, normalScale }) {
       >
         {(Material, props) => (
           <Material
-            metalness={0.3}
+            metalness={0.1}
             roughnessMap={roughness}
             roughness={0.8}
             normalMap={normal}
@@ -136,11 +137,12 @@ function ReflectorScene({ mixBlur, depthScale, distortion, normalScale }) {
           />
         )}
       </Reflector>
+
       <Box
         args={[10, 10 / aspect, 0.2]}
         position={[0, 10 / aspect / 2 + 0.5, -3]}
       >
-        <meshStandardMaterial map={shop} color="white" />
+        <meshStandardMaterial map={shop} />
       </Box>
 
       <Cylinder args={[0.5, 0.5, 2, 32]} position={[0, 1.3, 0]}>
