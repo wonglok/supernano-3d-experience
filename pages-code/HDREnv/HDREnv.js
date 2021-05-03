@@ -23,6 +23,7 @@ export function HDREnv() {
     loader.load(url, (texture) => {
       const envMap = pmremGenerator.fromEquirectangular(texture).texture;
       scene.environment = envMap;
+      // scene.environment = envMap;
     });
 
     return () => {
