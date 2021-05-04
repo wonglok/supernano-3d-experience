@@ -10,6 +10,7 @@ import {
   CameraShake,
   Cylinder,
   OrbitControls,
+  Plane,
   Reflector,
   Sphere,
   TorusKnot,
@@ -69,12 +70,61 @@ function RotateY({ children, speed = 1 }) {
   return <group ref={ref}>{children}</group>;
 }
 
+const visibleHeightAtZDepth = (depth, camera) => {
+  // compensate for cameras not positioned at z=0
+  const cameraOffset = camera.position.z;
+  if (depth < cameraOffset) depth -= cameraOffset;
+  else depth += cameraOffset;
+
+  // vertical fov in radians
+  const vFOV = (camera.fov * Math.PI) / 180;
+
+  // Math.abs to ensure the result is always positive
+  return 2 * Math.tan(vFOV / 2) * Math.abs(depth);
+};
+
+const visibleWidthAtZDepth = (depth, camera) => {
+  const height = visibleHeightAtZDepth(depth, camera);
+  return height * camera.aspect;
+};
+
+function BGPlane() {
+  let { camera, size } = useThree();
+  let h = visibleHeightAtZDepth(800, camera);
+  let w = visibleWidthAtZDepth(800, camera);
+
+  return (
+    <Plane args={[w, h]} position-z={-500}>
+      <shaderMaterial
+        uniforms={{
+          size: { value: new Vector2(size.width, size.height) },
+        }}
+        transparent={true}
+        fragmentShader={
+          /* glsl */ `
+
+          uniform vec2 size;
+          void main (void) {
+            vec2 uv = gl_FragCoord.xy / size;
+
+            float grad = 1.0 - uv.y;
+            grad -= 0.25;
+
+            gl_FragColor = vec4(grad, 0.0, grad, 1.0);
+          }
+      `
+        }
+      ></shaderMaterial>
+    </Plane>
+  );
+}
+
 function ReflectorScene({ mixBlur, depthScale, distortion, normalScale }) {
   const shop = useTexture("/textures/shop.png");
-  const roughness = useTexture("/textures/roughness_floor.jpg");
-  const normal = useTexture("/textures/NORM.jpg");
   const distortionMap = useTexture("/textures/dist_map.jpg");
   const orbitCtrls = useRef(null);
+  const roughness = useTexture("/textures/roughness_floor.jpg");
+  const normal = useTexture("/textures/NORM.jpg");
   const _normalScale = useMemo(() => new Vector2(normalScale || 0), [
     normalScale,
   ]);
@@ -112,8 +162,8 @@ function ReflectorScene({ mixBlur, depthScale, distortion, normalScale }) {
     <>
       <Reflector
         resolution={1024}
-        args={[40, 40]}
-        mirror={1.0}
+        args={[10, 10]}
+        mirror={0.99}
         mixBlur={mixBlur || 0}
         mixStrength={1}
         rotation={[Math.PI * -0.5, 0, 0]}
@@ -129,18 +179,26 @@ function ReflectorScene({ mixBlur, depthScale, distortion, normalScale }) {
           <Material
             metalness={0.1}
             roughnessMap={roughness}
+            // normalMap={normal}
             roughness={0.8}
-            normalMap={normal}
-            normalScale={_normalScale}
+            // normalMap={normal}
+            // normalScale={_normalScale}
             {...props}
             side={DoubleSide}
           />
         )}
       </Reflector>
 
+      <BGPlane></BGPlane>
+
+      <gridHelper
+        position-y={-0.1}
+        args={[100, 100, "#00ffff", "#00ffff"]}
+      ></gridHelper>
+
       <Box
         args={[10, 10 / aspect, 0.2]}
-        position={[0, 10 / aspect / 2 + 0.5, -3]}
+        position={[0, 10 / aspect / 2 + 0.05, -3]}
       >
         <meshStandardMaterial map={shop} />
       </Box>
@@ -188,7 +246,7 @@ function ReflectorScene({ mixBlur, depthScale, distortion, normalScale }) {
         angle={0.3}
       />
 
-      <OrbitControls ref={orbitCtrls}></OrbitControls>
+      {/* <OrbitControls ref={orbitCtrls}></OrbitControls> */}
     </>
   );
 }
