@@ -10,14 +10,13 @@ import {
   CameraShake,
   Cylinder,
   OrbitControls,
-  Plane,
-  Reflector,
   Sphere,
+  Reflector,
   TorusKnot,
   useGLTF,
   useTexture,
 } from "@react-three/drei";
-import { Color, DoubleSide, RepeatWrapping, Vector2 } from "three";
+import { BackSide, Color, DoubleSide, RepeatWrapping, Vector2 } from "three";
 import { HDREnv } from "../pages-code/HDREnv/HDREnv";
 
 // import { getProduct } from "nextjs-commerce-shopify";
@@ -90,12 +89,13 @@ const visibleWidthAtZDepth = (depth, camera) => {
 
 function BGPlane() {
   let { camera, size } = useThree();
-  let h = visibleHeightAtZDepth(800, camera);
-  let w = visibleWidthAtZDepth(800, camera);
+  // let h = visibleHeightAtZDepth(800, camera);
+  // let w = visibleWidthAtZDepth(800, camera);
 
   return (
-    <Plane args={[w, h]} position-z={-500}>
+    <Sphere args={[900, 32, 32]} position-y={100}>
       <shaderMaterial
+        side={BackSide}
         uniforms={{
           size: { value: new Vector2(size.width, size.height) },
         }}
@@ -115,7 +115,7 @@ function BGPlane() {
       `
         }
       ></shaderMaterial>
-    </Plane>
+    </Sphere>
   );
 }
 
@@ -246,7 +246,7 @@ function ReflectorScene({ mixBlur, depthScale, distortion, normalScale }) {
         angle={0.3}
       />
 
-      {/* <OrbitControls ref={orbitCtrls}></OrbitControls> */}
+      <OrbitControls ref={orbitCtrls}></OrbitControls>
     </>
   );
 }
