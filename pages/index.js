@@ -165,11 +165,12 @@ function Bottle() {
           anchorX="center" // default
           anchorY="middle" // default
         >
-          SuperNano (Try to hover it)
+          {`SuperNano`}
           <meshStandardMaterial
             attach="material"
             metalness={0.5}
             roughness={0.5}
+            side={DoubleSide}
           />
         </Text>
       </group>
@@ -244,7 +245,7 @@ function ReflectorScene({ mixBlur, depthScale, distortion, normalScale }) {
   useEffect(() => {
     camera.position.x = 0;
     camera.position.y = 1.3;
-    camera.position.z = 5;
+    camera.position.z = 5.5;
     scene.background = new Color("#000000");
   }, []);
 
