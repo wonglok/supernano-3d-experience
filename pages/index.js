@@ -165,7 +165,7 @@ function Bottle() {
           anchorX="center" // default
           anchorY="middle" // default
         >
-          SuperNano Test Text
+          SuperNano (Try to hover it)
           <meshStandardMaterial
             attach="material"
             metalness={0.5}
