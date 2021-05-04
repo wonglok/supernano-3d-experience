@@ -15,6 +15,7 @@ import {
   TorusKnot,
   useGLTF,
   useTexture,
+  Text,
 } from "@react-three/drei";
 import { BackSide, Color, DoubleSide, RepeatWrapping, Vector2 } from "three";
 import { HDREnv } from "../pages-code/HDREnv/HDREnv";
@@ -129,9 +130,8 @@ function Bottle() {
       token: Shopify.token,
       handle: "supernano-unicorn-test",
     });
-
-    setBottle(myprod);
     console.log(myprod);
+    setBottle(myprod);
   }, []);
 
   useFrame((st, dt) => {
@@ -155,10 +155,24 @@ function Bottle() {
 
   return (
     <group>
+      <group scale={5} position-y={0.25}>
+        <Text
+          anchorX="center" // default
+          anchorY="middle" // default
+        >
+          SuperNano Test Text
+          <meshStandardMaterial
+            attach="material"
+            metalness={0.5}
+            roughness={0.5}
+          />
+        </Text>
+      </group>
+
       <Cylinder
         ref={ref}
         args={[0.5, 0.5, 2, 32]}
-        position={[0, 1.3, 0]}
+        position={[0, 1.3 + 0.5, 0]}
         onPointerEnter={() => {
           document.body.style.cursor = "pointer";
           setHover(true);
