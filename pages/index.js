@@ -92,12 +92,16 @@ function BGPlane() {
   let { camera, size } = useThree();
   // let h = visibleHeightAtZDepth(800, camera);
   // let w = visibleWidthAtZDepth(800, camera);
-
+  let time = useRef({ value: 0 });
+  useFrame((st, dt) => {
+    time.current.value += dt;
+  });
   return (
     <Sphere args={[900, 32, 32]} position-y={100}>
       <shaderMaterial
         side={BackSide}
         uniforms={{
+          time: time.current,
           size: { value: new Vector2(size.width, size.height) },
         }}
         transparent={true}
@@ -105,11 +109,12 @@ function BGPlane() {
           /* glsl */ `
 
           uniform vec2 size;
+          uniform float time;
           void main (void) {
             vec2 uv = gl_FragCoord.xy / size;
 
             float grad = 1.0 - uv.y;
-            grad -= 0.25;
+            grad -= 0.25 * cos(time * 0.45);
 
             gl_FragColor = vec4(grad, 0.0, grad, 1.0);
           }
