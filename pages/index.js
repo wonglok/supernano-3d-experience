@@ -1,7 +1,7 @@
 // import styles from "../styles/Home.module.css";
 
 import Head from "next/head";
-import { getAllCollections } from "nextjs-commerce-shopify";
+import { getAllCollections, getProduct } from "nextjs-commerce-shopify";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Shopify } from "./_app";
 import { Canvas, useFrame, useGraph, useThree } from "@react-three/fiber";
@@ -119,6 +119,98 @@ function BGPlane() {
   );
 }
 
+function Bottle() {
+  const ref = useRef();
+  const [bottle, setBottle] = useState(false);
+  const [hovering, setHover] = useState(false);
+  useEffect(async () => {
+    const myprod = await getProduct({
+      domain: Shopify.domain,
+      token: Shopify.token,
+      handle: "supernano-unicorn-test",
+    });
+
+    setBottle(myprod);
+    console.log(myprod);
+  }, []);
+
+  useFrame((st, dt) => {
+    if (hovering) {
+      if (ref.current) {
+        ref.current.time = ref.current.time || 0;
+        ref.current.time += dt;
+        let time = ref.current.time * 35.0;
+        ref.current.rotation.x = Math.sin(time) * 0.075;
+        ref.current.rotation.y = Math.sin(time) * 0.075;
+        ref.current.rotation.z = Math.sin(time) * 0.075;
+      }
+    } else {
+      if (ref.current) {
+        ref.current.rotation.x *= 0.5;
+        ref.current.rotation.y *= 0.5;
+        ref.current.rotation.z *= 0.5;
+      }
+    }
+  });
+
+  return (
+    <group>
+      <Cylinder
+        ref={ref}
+        args={[0.5, 0.5, 2, 32]}
+        position={[0, 1.3, 0]}
+        onPointerEnter={() => {
+          document.body.style.cursor = "pointer";
+          setHover(true);
+        }}
+        onPointerLeave={() => {
+          document.body.style.cursor = "";
+          setHover(false);
+        }}
+        onPointerDown={() => {
+          if (bottle) {
+            window.location.assign(bottle.onlineStoreUrl);
+          }
+        }}
+      >
+        <meshStandardMaterial metalness={1} roughness={0.5} color="#bababa" />
+      </Cylinder>
+
+      <RotateY speed={1.5}>
+        <pointLight
+          distance={100}
+          decay={2}
+          position={[-2, 1.3, 0]}
+          color={"#ff00ff"}
+        >
+          <Sphere args={[0.05, 24, 32]}>
+            <meshStandardMaterial
+              metalness={1}
+              roughness={0.0}
+              color={"#ff00ff"}
+            ></meshStandardMaterial>
+          </Sphere>
+        </pointLight>
+
+        <pointLight
+          distance={100}
+          decay={2}
+          position={[2, 1.3, 0]}
+          color={"#00ffff"}
+        >
+          <Sphere args={[0.05, 24, 32]}>
+            <meshStandardMaterial
+              metalness={1}
+              roughness={0.0}
+              color={"#00ffff"}
+            ></meshStandardMaterial>
+          </Sphere>
+        </pointLight>
+      </RotateY>
+    </group>
+  );
+}
+
 function ReflectorScene({ mixBlur, depthScale, distortion, normalScale }) {
   const shop = useTexture("/textures/shop.png");
   const distortionMap = useTexture("/textures/dist_map.jpg");
@@ -203,41 +295,7 @@ function ReflectorScene({ mixBlur, depthScale, distortion, normalScale }) {
         <meshStandardMaterial map={shop} />
       </Box>
 
-      <Cylinder args={[0.5, 0.5, 2, 32]} position={[0, 1.3, 0]}>
-        <meshStandardMaterial metalness={1} roughness={0.5} color="#bababa" />
-      </Cylinder>
-
-      <RotateY speed={1.5}>
-        <pointLight
-          distance={100}
-          decay={2}
-          position={[-2, 1.3, 0]}
-          color={"#ff00ff"}
-        >
-          <Sphere args={[0.05, 24, 32]}>
-            <meshStandardMaterial
-              metalness={1}
-              roughness={0.0}
-              color={"#ff00ff"}
-            ></meshStandardMaterial>
-          </Sphere>
-        </pointLight>
-
-        <pointLight
-          distance={100}
-          decay={2}
-          position={[2, 1.3, 0]}
-          color={"#00ffff"}
-        >
-          <Sphere args={[0.05, 24, 32]}>
-            <meshStandardMaterial
-              metalness={1}
-              roughness={0.0}
-              color={"#00ffff"}
-            ></meshStandardMaterial>
-          </Sphere>
-        </pointLight>
-      </RotateY>
+      <Bottle></Bottle>
 
       <spotLight
         intensity={1}
