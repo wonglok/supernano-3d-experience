@@ -151,82 +151,82 @@ function BGPlane() {
   );
 }
 
-function Logo() {
-  let { SVGLoader } = require("three/examples/jsm/loaders/SVGLoader.js");
+// function Logo() {
+//   let { SVGLoader } = require("three/examples/jsm/loaders/SVGLoader.js");
 
-  let { paths } = useLoader(SVGLoader, "/svg/nano-white-text.svg");
-  const shapes = useMemo(
-    () =>
-      paths.flatMap((p) =>
-        p.toShapes(true).map((shape) => ({
-          shape,
-          color: p.color,
-          fillOpacity: p.userData.style.fillOpacity,
-        }))
-      ),
-    [paths]
-  );
+//   let { paths } = useLoader(SVGLoader, "/svg/nano-white-text.svg");
+//   const shapes = useMemo(
+//     () =>
+//       paths.flatMap((p) =>
+//         p.toShapes(true).map((shape) => ({
+//           shape,
+//           color: p.color,
+//           fillOpacity: p.userData.style.fillOpacity,
+//         }))
+//       ),
+//     [paths]
+//   );
 
-  const ref = useRef();
-  useLayoutEffect(() => {
-    // const sphere = new Box3()
-    //   .setFromObject(ref.current)
-    //   .getBoundingSphere(new SphereMath());
-    // ref.current.position.set(-sphere.center.x, -sphere.center.y, 0);
-  }, [ref.current]);
+//   const ref = useRef();
+//   useLayoutEffect(() => {
+//     // const sphere = new Box3()
+//     //   .setFromObject(ref.current)
+//     //   .getBoundingSphere(new SphereMath());
+//     // ref.current.position.set(-sphere.center.x, -sphere.center.y, 0);
+//   }, [ref.current]);
 
-  return (
-    <group rotation-x={Math.PI} scale={0.01}>
-      <group ref={ref}>
-        {shapes.map((props, index) => (
-          <Cell
-            key={props.shape.uuid}
-            {...props}
-            text={index % 20 || `Cell ${index}`}
-          />
-        ))}
-      </group>
-    </group>
-  );
+//   return (
+//     <group rotation-x={Math.PI} scale={0.01}>
+//       <group ref={ref}>
+//         {shapes.map((props, index) => (
+//           <Cell
+//             key={props.shape.uuid}
+//             {...props}
+//             text={index % 20 || `Cell ${index}`}
+//           />
+//         ))}
+//       </group>
+//     </group>
+//   );
 
-  // return <group></group>;
-}
+//   // return <group></group>;
+// }
 
-function Cell({ color, shape, fillOpacity, text }) {
-  const [hovered, set] = useState(false);
-  let defaultCursor = "";
-  let hoveredCursor = "";
-  useEffect(
-    () =>
-      void (document.body.style.cursor = hovered
-        ? `url('${hoveredCursor}'), pointer`
-        : `url('${defaultCursor}'), auto`),
-    [hovered]
-  );
-  return (
-    <mesh onPointerOver={(e) => set(true)} onPointerOut={() => set(false)}>
-      <meshBasicMaterial
-        color={hovered ? "hotpink" : color}
-        opacity={fillOpacity}
-        depthWrite={true}
-        side={DoubleSide}
-        transparent
-      />
-      <shapeBufferGeometry args={[shape]} />
-      {/* {text && (
-        <Text
-          anchorX="center"
-          anchorY="center"
-          fontSize={6}
-          font="https://rsms.me/inter/font-files/Inter-Regular.woff?v=3.15"
-          position={[shape.getPoint(0).x, shape.getPoint(0).y, 1]}
-        >
-          {text}
-        </Text>
-      )} */}
-    </mesh>
-  );
-}
+// function Cell({ color, shape, fillOpacity, text }) {
+//   const [hovered, set] = useState(false);
+//   let defaultCursor = "";
+//   let hoveredCursor = "";
+//   useEffect(
+//     () =>
+//       void (document.body.style.cursor = hovered
+//         ? `url('${hoveredCursor}'), pointer`
+//         : `url('${defaultCursor}'), auto`),
+//     [hovered]
+//   );
+//   return (
+//     <mesh onPointerOver={(e) => set(true)} onPointerOut={() => set(false)}>
+//       <meshBasicMaterial
+//         color={hovered ? "hotpink" : color}
+//         opacity={fillOpacity}
+//         depthWrite={true}
+//         side={DoubleSide}
+//         transparent
+//       />
+//       <shapeBufferGeometry args={[shape]} />
+//       {/* {text && (
+//         <Text
+//           anchorX="center"
+//           anchorY="center"
+//           fontSize={6}
+//           font="https://rsms.me/inter/font-files/Inter-Regular.woff?v=3.15"
+//           position={[shape.getPoint(0).x, shape.getPoint(0).y, 1]}
+//         >
+//           {text}
+//         </Text>
+//       )} */}
+//     </mesh>
+//   );
+// }
 
 function Bottle() {
   const ref = useRef();
@@ -584,7 +584,7 @@ function ReflectorScene({ mixBlur, depthScale, distortion, normalScale }) {
 
       <Bottle></Bottle>
 
-      <Logo></Logo>
+      {/* <Logo></Logo> */}
 
       <spotLight
         intensity={1}
