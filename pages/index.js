@@ -225,7 +225,6 @@ function Bottle() {
       node.fragmentShader = node.fragmentShader.replace(
         `gl_FragColor = vec4( outgoingLight, diffuseColor.a );`,
         /* glsl */ `
-        float avgC = (outgoingLight.r + outgoingLight.g + outgoingLight.b) / 3.0;
         vec3 rainbow = vec3(
            pattern(vUv.xx * 15.0123 + -2.7 * cos(5.0 * vViewPosition.x)),
            pattern(vUv.xx * 15.0123 +  0.0 * cos(5.0 * vViewPosition.x)),
@@ -236,13 +235,18 @@ function Bottle() {
         float labelAlpha = labelColor4.a;
 
         vec3 rainbowColor = outgoingLight * rainbow * 2.0;
+        float avgC = (labelColor.r + labelColor.g + labelColor.b) / 3.0;
 
         vec3 outColor = vec3(0.0);
         outColor.rgb =  0.5 * labelColor + 0.5 * labelColor * rainbowColor;
         if (labelAlpha <= 0.9) {
           outColor.rgb = rainbowColor;
         }
-
+        if (avgC < 0.11) {
+          outColor.r = pow(outColor.r, 1.3);
+          outColor.g = pow(outColor.g, 1.3);
+          outColor.b = pow(outColor.b, 1.3);
+        }
 
         gl_FragColor = vec4( outColor, diffuseColor.a );
       `
@@ -298,33 +302,35 @@ function Bottle() {
           />
         </Text>
       </group>
-
-      <Cylinder
-        ref={ref}
-        args={[0.5, 0.5, 2, 32, 1, true]}
-        position={[0, 1.3 + 0.5, 0]}
-        onPointerEnter={() => {
-          document.body.style.cursor = "pointer";
-          setHover(true);
-        }}
-        onPointerLeave={() => {
-          document.body.style.cursor = "";
-          setHover(false);
-        }}
-        onPointerUp={() => {
-          if (bottle) {
-            window.location.assign(bottle.onlineStoreUrl);
-          }
-        }}
-      >
-        <meshStandardMaterial
-          side={DoubleSide}
-          transparent={true}
-          metalness={0.9}
-          roughness={0.2}
-          ref={fresnel}
-        />
-      </Cylinder>
+      <RotateY speed={1}>
+        <Cylinder
+          ref={ref}
+          args={[0.5, 0.5, 2, 32, 1, true]}
+          position={[0, 1.3 + 0.5, 0]}
+          rotation-y={Math.PI * 0.5}
+          onPointerEnter={() => {
+            document.body.style.cursor = "pointer";
+            setHover(true);
+          }}
+          onPointerLeave={() => {
+            document.body.style.cursor = "";
+            setHover(false);
+          }}
+          onPointerUp={() => {
+            if (bottle) {
+              window.location.assign(bottle.onlineStoreUrl);
+            }
+          }}
+        >
+          <meshStandardMaterial
+            side={DoubleSide}
+            transparent={true}
+            metalness={0.9}
+            roughness={0.2}
+            ref={fresnel}
+          />
+        </Cylinder>
+      </RotateY>
 
       {/* <RotateY speed={1.5}>
         <pointLight
