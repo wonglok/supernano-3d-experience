@@ -2,31 +2,48 @@
 
 import Head from "next/head";
 import { getAllCollections, getProduct } from "nextjs-commerce-shopify";
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import {
+  Suspense,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Shopify } from "./_app";
-import { Canvas, useFrame, useGraph, useThree } from "@react-three/fiber";
+import {
+  Canvas,
+  useFrame,
+  useGraph,
+  useLoader,
+  useThree,
+} from "@react-three/fiber";
 import {
   Box,
   CameraShake,
   Cylinder,
   OrbitControls,
-  Sphere,
   Reflector,
   TorusKnot,
   useGLTF,
   useTexture,
   Text,
+  Sphere,
+  Plane,
 } from "@react-three/drei";
 import {
   BackSide,
+  Box3,
   Color,
   DoubleSide,
   MeshStandardMaterial,
   RepeatWrapping,
   sRGBEncoding,
   Vector2,
+  Sphere as SphereMath,
 } from "three";
 import { HDREnv } from "../pages-code/HDREnv/HDREnv";
+
 import { useControls } from "leva";
 
 // import { getProduct } from "nextjs-commerce-shopify";
@@ -108,7 +125,7 @@ function BGPlane() {
   return (
     <Sphere args={[900, 32, 32]} position-y={100}>
       <shaderMaterial
-        side={BackSide}
+        side={DoubleSide}
         uniforms={{
           time: time.current,
           size: { value: new Vector2(size.width, size.height) },
@@ -134,6 +151,83 @@ function BGPlane() {
   );
 }
 
+function Logo() {
+  let { SVGLoader } = require("three/examples/jsm/loaders/SVGLoader.js");
+
+  let { paths } = useLoader(SVGLoader, "/svg/nano-white-text.svg");
+  const shapes = useMemo(
+    () =>
+      paths.flatMap((p) =>
+        p.toShapes(true).map((shape) => ({
+          shape,
+          color: p.color,
+          fillOpacity: p.userData.style.fillOpacity,
+        }))
+      ),
+    [paths]
+  );
+
+  const ref = useRef();
+  useLayoutEffect(() => {
+    // const sphere = new Box3()
+    //   .setFromObject(ref.current)
+    //   .getBoundingSphere(new SphereMath());
+    // ref.current.position.set(-sphere.center.x, -sphere.center.y, 0);
+  }, [ref.current]);
+
+  return (
+    <group rotation-x={Math.PI} scale={0.01}>
+      <group ref={ref}>
+        {shapes.map((props, index) => (
+          <Cell
+            key={props.shape.uuid}
+            {...props}
+            text={index % 20 || `Cell ${index}`}
+          />
+        ))}
+      </group>
+    </group>
+  );
+
+  // return <group></group>;
+}
+
+function Cell({ color, shape, fillOpacity, text }) {
+  const [hovered, set] = useState(false);
+  let defaultCursor = "";
+  let hoveredCursor = "";
+  useEffect(
+    () =>
+      void (document.body.style.cursor = hovered
+        ? `url('${hoveredCursor}'), pointer`
+        : `url('${defaultCursor}'), auto`),
+    [hovered]
+  );
+  return (
+    <mesh onPointerOver={(e) => set(true)} onPointerOut={() => set(false)}>
+      <meshBasicMaterial
+        color={hovered ? "hotpink" : color}
+        opacity={fillOpacity}
+        depthWrite={true}
+        side={DoubleSide}
+        transparent
+      />
+      <shapeBufferGeometry args={[shape]} />
+      {/* {text && (
+        <Text
+          anchorX="center"
+          anchorY="center"
+          fontSize={6}
+          font="https://rsms.me/inter/font-files/Inter-Regular.woff?v=3.15"
+          position={[shape.getPoint(0).x, shape.getPoint(0).y, 1]}
+        >
+          {text}
+        </Text>
+      )} */}
+    </mesh>
+  );
+}
+
 function Bottle() {
   const ref = useRef();
   const [bottle, setBottle] = useState(false);
@@ -145,6 +239,7 @@ function Bottle() {
   const supernanoWhite = useTexture(
     "/textures/supernano-label-loklok3d-white.png"
   );
+  const nanowhite = useTexture("/svg/nano-white-text.svg");
 
   const time = useRef({ value: 0 });
   const useControls = require("leva").useControls;
@@ -260,15 +355,11 @@ function Bottle() {
         outColor = mix(labelColor, labelColor * rainbow, mixer);
 
         // vec3 rainbowColor = outgoingLight * rainbow * 2.0;
-
         // vec3 outColor = vec3(1.0);
-
         // outColor.rgb = mix(maskColor, maskColor * rainbowColor, 0.5);
-
         // if (maskAlpha <= 0.5) {
         //   outColor.rgb = rainbowColor * maskAlpha;
         // }
-
 
         // darken
         if (avgC <= 0.5) {
@@ -317,8 +408,8 @@ function Bottle() {
 
   return (
     <group>
-      <group scale={5} position-y={0.25}>
-        <Text
+      <group scale={5} position-y={1.5}>
+        {/* <Text
           anchorX="center" // default
           anchorY="middle" // default
         >
@@ -329,13 +420,24 @@ function Bottle() {
             roughness={0.5}
             side={DoubleSide}
           />
-        </Text>
+        </Text> */}
+
+        <Plane position-y={0.3} args={[0.5, 0.5 / (876.87 / 424.816)]}>
+          <meshStandardMaterial
+            transparent={true}
+            map={nanowhite}
+            side={DoubleSide}
+            metalness={0.5}
+            roughness={0.1}
+          ></meshStandardMaterial>
+        </Plane>
       </group>
+
       <RotateY speed={1}>
         <Cylinder
           ref={ref}
           args={[0.5, 0.5, 2, 32, 1, true]}
-          position={[0, 1.3 + 0.5, 0]}
+          position={[0, 1.3, 0]}
           rotation-y={Math.PI * 0.5}
           onPointerEnter={() => {
             document.body.style.cursor = "pointer";
@@ -477,10 +579,12 @@ function ReflectorScene({ mixBlur, depthScale, distortion, normalScale }) {
         args={[10, 10 / aspect, 0.2]}
         position={[0, 10 / aspect / 2 + 0.05, -3]}
       >
-        <meshStandardMaterial map={shop} />
+        <meshStandardMaterial metalness={1} roughness={0.2} map={shop} />
       </Box>
 
       <Bottle></Bottle>
+
+      <Logo></Logo>
 
       <spotLight
         intensity={1}
