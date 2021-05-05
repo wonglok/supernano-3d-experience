@@ -148,9 +148,9 @@ function Bottle() {
 
   const time = useRef({ value: 0 });
   const useControls = require("leva").useControls;
-  const params = useControls({
-    threshold: 0.9,
-  });
+  // const params = useControls({
+  //   threshold: 0.9,
+  // });
 
   useFrame((st, dt) => {
     time.current.value += dt;
