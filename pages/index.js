@@ -27,6 +27,7 @@ import {
   Vector2,
 } from "three";
 import { HDREnv } from "../pages-code/HDREnv/HDREnv";
+import { useControls } from "leva";
 
 // import { getProduct } from "nextjs-commerce-shopify";
 
@@ -138,21 +139,32 @@ function Bottle() {
   const [bottle, setBottle] = useState(false);
   const [hovering, setHover] = useState(false);
   const fresnel = useRef(new MeshStandardMaterial());
-  const supernanoHoles = useTexture("/textures/supernano-holes.png");
+  const supernanoHoles = useTexture(
+    "/textures/supernano-label-loklok3d-alpha-v4.png"
+  );
+  const supernanoWhite = useTexture(
+    "/textures/supernano-label-loklok3d-white.png"
+  );
 
   const time = useRef({ value: 0 });
+  const useControls = require("leva").useControls;
+  const params = useControls({
+    threshold: 0.9,
+  });
 
   useFrame((st, dt) => {
     time.current.value += dt;
   });
   useEffect(() => {
     supernanoHoles.encoding = sRGBEncoding;
+    supernanoWhite.encoding = sRGBEncoding;
     //
     fresnel.current.needsUpdate = true;
     //
     fresnel.current.onBeforeCompile = (node) => {
       node.uniforms.time = time.current;
-      node.uniforms.label = { value: supernanoHoles };
+      node.uniforms.mask = { value: supernanoHoles };
+      node.uniforms.label = { value: supernanoWhite };
       node.vertexShader = node.vertexShader.replace(
         `#include <clipping_planes_pars_vertex>`,
         `#include <clipping_planes_pars_vertex>
@@ -185,6 +197,7 @@ function Bottle() {
         #endif
 
         uniform sampler2D label;
+        uniform sampler2D mask;
 
         const mat2 m = mat2( 0.80,  0.60, -0.60,  0.80 );
 
@@ -212,8 +225,6 @@ function Bottle() {
             return f/0.96875;
         }
 
-
-
         float pattern (vec2 p) {
           float vout = fbm4( p + vViewPosition.x + fbm6(  p + fbm4( p + vViewPosition.x )) );
           return abs(vout);
@@ -234,21 +245,39 @@ function Bottle() {
         vec3 labelColor = labelColor4.rgb;
         float labelAlpha = labelColor4.a;
 
-        vec3 rainbowColor = outgoingLight * rainbow * 2.0;
+        vec4 maskColor4 = texture2D(mask, vUv.xy);
+        vec3 maskColor = maskColor4.rgb;
+        float maskAlpha = maskColor4.a;
         float avgC = (labelColor.r + labelColor.g + labelColor.b) / 3.0;
 
         vec3 outColor = vec3(0.0);
-        outColor.rgb =  0.5 * labelColor + 0.5 * labelColor * rainbowColor;
-        if (labelAlpha <= 0.9) {
-          outColor.rgb = rainbowColor;
-        }
-        if (avgC < 0.11) {
-          outColor.r = pow(outColor.r, 1.3);
-          outColor.g = pow(outColor.g, 1.3);
-          outColor.b = pow(outColor.b, 1.3);
+
+        float mixer = 1.0 - maskAlpha;
+        if (mixer <= 0.1) {
+          mixer = 0.1;
         }
 
-        gl_FragColor = vec4( outColor, diffuseColor.a );
+        outColor = mix(labelColor, labelColor * rainbow, mixer);
+
+        // vec3 rainbowColor = outgoingLight * rainbow * 2.0;
+
+        // vec3 outColor = vec3(1.0);
+
+        // outColor.rgb = mix(maskColor, maskColor * rainbowColor, 0.5);
+
+        // if (maskAlpha <= 0.5) {
+        //   outColor.rgb = rainbowColor * maskAlpha;
+        // }
+
+
+        // darken
+        if (avgC <= 0.5) {
+          outColor.r = pow(outColor.r, 1.5);
+          outColor.g = pow(outColor.g, 1.5);
+          outColor.b = pow(outColor.b, 1.5);
+        }
+
+        gl_FragColor = vec4( outColor, 1.0 );
       `
       );
     };
