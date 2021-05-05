@@ -17,7 +17,15 @@ import {
   useTexture,
   Text,
 } from "@react-three/drei";
-import { BackSide, Color, DoubleSide, RepeatWrapping, Vector2 } from "three";
+import {
+  BackSide,
+  Color,
+  DoubleSide,
+  MeshStandardMaterial,
+  RepeatWrapping,
+  sRGBEncoding,
+  Vector2,
+} from "three";
 import { HDREnv } from "../pages-code/HDREnv/HDREnv";
 
 // import { getProduct } from "nextjs-commerce-shopify";
@@ -129,6 +137,122 @@ function Bottle() {
   const ref = useRef();
   const [bottle, setBottle] = useState(false);
   const [hovering, setHover] = useState(false);
+  const fresnel = useRef(new MeshStandardMaterial());
+  const supernanoHoles = useTexture("/textures/supernano-holes.png");
+
+  const time = useRef({ value: 0 });
+
+  useFrame((st, dt) => {
+    time.current.value += dt;
+  });
+  useEffect(() => {
+    supernanoHoles.encoding = sRGBEncoding;
+    //
+    fresnel.current.needsUpdate = true;
+    //
+    fresnel.current.onBeforeCompile = (node) => {
+      node.uniforms.time = time.current;
+      node.uniforms.label = { value: supernanoHoles };
+      node.vertexShader = node.vertexShader.replace(
+        `#include <clipping_planes_pars_vertex>`,
+        `#include <clipping_planes_pars_vertex>
+
+
+        // varying vec2 vUv;
+        #ifdef USE_MAP
+        #else
+        varying vec2 vUv;
+        #endif
+      `
+      );
+      node.vertexShader = node.vertexShader.replace(
+        `#include <fog_vertex>`,
+        `
+        #include <fog_vertex>
+        vUv = uv;
+      `
+      );
+
+      node.fragmentShader = node.fragmentShader.replace(
+        `#include <clipping_planes_pars_fragment>`,
+        /* glsl */ `
+        #include <clipping_planes_pars_fragment>
+
+        uniform float time;
+        #ifdef USE_MAP
+        #else
+        varying vec2 vUv;
+        #endif
+
+        uniform sampler2D label;
+
+        const mat2 m = mat2( 0.80,  0.60, -0.60,  0.80 );
+
+        float noise( in vec2 p ) {
+          return sin(p.x)*sin(p.y);
+        }
+
+        float fbm4( vec2 p ) {
+            float f = 0.0;
+            f += 0.5000 * noise( p ); p = m * p * 2.02;
+            f += 0.2500 * noise( p ); p = m * p * 2.03;
+            f += 0.1250 * noise( p ); p = m * p * 2.01;
+            f += 0.0625 * noise( p );
+            return f / 0.9375;
+        }
+
+        float fbm6( vec2 p ) {
+            float f = 0.0;
+            f += 0.500000*(0.5 + 0.5 * noise( p )); p = m*p*2.02;
+            f += 0.250000*(0.5 + 0.5 * noise( p )); p = m*p*2.03;
+            f += 0.125000*(0.5 + 0.5 * noise( p )); p = m*p*2.01;
+            f += 0.062500*(0.5 + 0.5 * noise( p )); p = m*p*2.04;
+            f += 0.031250*(0.5 + 0.5 * noise( p )); p = m*p*2.01;
+            f += 0.015625*(0.5 + 0.5 * noise( p ));
+            return f/0.96875;
+        }
+
+
+
+        float pattern (vec2 p) {
+          float vout = fbm4( p + vViewPosition.x + fbm6(  p + fbm4( p + vViewPosition.x )) );
+          return abs(vout);
+        }
+
+      `
+      );
+
+      node.fragmentShader = node.fragmentShader.replace(
+        `gl_FragColor = vec4( outgoingLight, diffuseColor.a );`,
+        /* glsl */ `
+        float avgC = (outgoingLight.r + outgoingLight.g + outgoingLight.b) / 3.0;
+        vec3 rainbow = vec3(
+           pattern(vUv.xx * 15.0123 + -2.7 * cos(5.0 * vViewPosition.x)),
+           pattern(vUv.xx * 15.0123 +  0.0 * cos(5.0 * vViewPosition.x)),
+           pattern(vUv.xx * 15.0123 +  2.7 * cos(5.0 * vViewPosition.x))
+        );
+        vec4 labelColor4 = texture2D(label, vUv.xy);
+        vec3 labelColor = labelColor4.rgb;
+        float labelAlpha = labelColor4.a;
+
+        vec3 rainbowColor = outgoingLight * rainbow * 2.0;
+
+        vec3 outColor = vec3(0.0);
+        outColor.rgb =  0.5 * labelColor + 0.5 * labelColor * rainbowColor;
+        if (labelAlpha <= 0.9) {
+          outColor.rgb = rainbowColor;
+        }
+
+
+        gl_FragColor = vec4( outColor, diffuseColor.a );
+      `
+      );
+    };
+
+    fresnel.current.customProgramCacheKey = () => `_${Math.random()}`;
+    fresnel.current.needsUpdate = true;
+  });
+
   useEffect(async () => {
     const myprod = await getProduct({
       domain: Shopify.domain,
@@ -177,7 +301,7 @@ function Bottle() {
 
       <Cylinder
         ref={ref}
-        args={[0.5, 0.5, 2, 32]}
+        args={[0.5, 0.5, 2, 32, 1, true]}
         position={[0, 1.3 + 0.5, 0]}
         onPointerEnter={() => {
           document.body.style.cursor = "pointer";
@@ -187,16 +311,22 @@ function Bottle() {
           document.body.style.cursor = "";
           setHover(false);
         }}
-        onPointerDown={() => {
+        onPointerUp={() => {
           if (bottle) {
             window.location.assign(bottle.onlineStoreUrl);
           }
         }}
       >
-        <meshStandardMaterial metalness={1} roughness={0.5} color="#bababa" />
+        <meshStandardMaterial
+          side={DoubleSide}
+          transparent={true}
+          metalness={0.9}
+          roughness={0.2}
+          ref={fresnel}
+        />
       </Cylinder>
 
-      <RotateY speed={1.5}>
+      {/* <RotateY speed={1.5}>
         <pointLight
           distance={100}
           decay={2}
@@ -226,7 +356,7 @@ function Bottle() {
             ></meshStandardMaterial>
           </Sphere>
         </pointLight>
-      </RotateY>
+      </RotateY> */}
     </group>
   );
 }
