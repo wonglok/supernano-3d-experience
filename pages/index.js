@@ -233,6 +233,40 @@ function Bottle() {
   const [bottle, setBottle] = useState(false);
   const [hovering, setHover] = useState(false);
   const fresnel = useRef(new MeshStandardMaterial());
+  let { OBJLoader } = require("three/examples/jsm/loaders/OBJLoader");
+  const bottleRaw = useLoader(OBJLoader, "/obj/bottle_cap_assembly.obj");
+  const objBottle = useMemo(() => {
+    let res = bottleRaw.clone();
+    res.traverse((item) => {
+      if (item && item.isMesh) {
+        if (item.name === "1") {
+          item.material = new MeshStandardMaterial({
+            roughness: 0.5,
+            metalness: 0.3,
+            color: new Color("#A0A7C0").offsetHSL(0, 0, 0.1),
+          });
+        }
+        if (item.name === "3") {
+          // cap
+          item.material = new MeshStandardMaterial({
+            roughness: 0.5,
+            metalness: 0.3,
+            color: new Color("#A0A7C0"),
+          });
+        }
+        if (item.name === "5") {
+          // cap ring
+          item.material = new MeshStandardMaterial({
+            roughness: 0.5,
+            metalness: 0.3,
+            color: new Color("#A0A7C0").offsetHSL(0, 0, 0.2),
+          });
+        }
+      }
+    });
+    return res;
+  }, [bottleRaw]);
+
   const supernanoHoles = useTexture(
     "/textures/supernano-label-loklok3d-alpha-v4.png"
   );
@@ -408,7 +442,7 @@ function Bottle() {
 
   return (
     <group>
-      <group scale={5} position-y={1.5}>
+      <group scale={5} position-y={2.3}>
         {/* <Text
           anchorX="center" // default
           anchorY="middle" // default
@@ -433,35 +467,40 @@ function Bottle() {
         </Plane>
       </group>
 
-      <RotateY speed={1}>
-        <Cylinder
-          ref={ref}
-          args={[0.5, 0.5, 2, 32, 1, true]}
-          position={[0, 1.3, 0]}
-          rotation-y={Math.PI * 0.5}
-          onPointerEnter={() => {
-            document.body.style.cursor = "pointer";
-            setHover(true);
-          }}
-          onPointerLeave={() => {
-            document.body.style.cursor = "";
-            setHover(false);
-          }}
-          onPointerUp={() => {
-            if (bottle) {
-              window.location.assign(bottle.onlineStoreUrl);
-            }
-          }}
-        >
-          <meshStandardMaterial
-            side={DoubleSide}
-            transparent={true}
-            metalness={0.9}
-            roughness={0.2}
-            ref={fresnel}
-          />
-        </Cylinder>
-      </RotateY>
+      <group ref={ref}>
+        <RotateY speed={1}>
+          <Cylinder
+            args={[0.45, 0.45, 1.8, 32, 1, true]}
+            position={[0, 1.35, 0]}
+            rotation-y={Math.PI * 0.5}
+            onPointerEnter={() => {
+              document.body.style.cursor = "pointer";
+              setHover(true);
+            }}
+            onPointerLeave={() => {
+              document.body.style.cursor = "";
+              setHover(false);
+            }}
+            onPointerUp={() => {
+              if (bottle) {
+                window.location.assign(bottle.onlineStoreUrl);
+              }
+            }}
+          >
+            <meshStandardMaterial
+              side={DoubleSide}
+              transparent={true}
+              metalness={0.9}
+              roughness={0.2}
+              ref={fresnel}
+            />
+          </Cylinder>
+
+          <group position={[0, 0.3, 0]}>
+            <primitive scale={0.025} object={objBottle}></primitive>
+          </group>
+        </RotateY>
+      </group>
 
       {/* <RotateY speed={1.5}>
         <pointLight
@@ -504,9 +543,10 @@ function ReflectorScene({ mixBlur, depthScale, distortion, normalScale }) {
   const orbitCtrls = useRef(null);
   const roughness = useTexture("/textures/roughness_floor.jpg");
   const normal = useTexture("/textures/NORM.jpg");
-  const _normalScale = useMemo(() => new Vector2(normalScale || 0), [
-    normalScale,
-  ]);
+  const _normalScale = useMemo(
+    () => new Vector2(normalScale || 0),
+    [normalScale]
+  );
 
   const { scene, camera } = useThree();
   useEffect(() => {
@@ -618,8 +658,8 @@ export default function Home() {
 
         <HDREnv></HDREnv>
 
-        <ambientLight />
-        <pointLight position={[10, 10, 10]} />
+        {/* <ambientLight /> */}
+        {/* <pointLight position={[10, 10, 10]} /> */}
 
         {/* <Box position={[-1.2, 0, 0]} />
         <Box position={[1.2, 0, 0]} /> */}
