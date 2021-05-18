@@ -430,6 +430,7 @@ function Bottle() {
   });
 
   const pourGroup = useRef();
+  let shakeEngine = useRef();
 
   let pourAnimation = () => {
     let anime = require("animejs/lib/anime.es.js").default;
@@ -508,6 +509,7 @@ function Bottle() {
         }).finished;
       })
       .then(() => {
+        // put bottle down
         anime({
           targets: [pourGroup.current.position],
           y: 0,
@@ -520,6 +522,33 @@ function Bottle() {
           z: 0,
           duration: 4000,
           easing: "easeInOutQuad",
+        });
+
+        // shake
+        anime({
+          targets: [shakeEngine.current.rotation],
+          x: 0.015,
+          y: 0.015,
+          z: 0.015,
+          duration: 8000,
+          easing: function (el, i, total) {
+            return function (t) {
+              return Math.random() * Math.pow(Math.sin(t * (i + 1)), total);
+            };
+          },
+        }).finished.then(() => {
+          anime({
+            targets: [shakeEngine.current.rotation],
+            x: 0.015,
+            y: 0.015,
+            z: 0.015,
+            duration: 8000,
+            easing: function (el, i, total) {
+              return function (t) {
+                return Math.random() * Math.pow(Math.sin(t * (i + 1)), total);
+              };
+            },
+          });
         });
 
         return anime({
@@ -544,13 +573,22 @@ function Bottle() {
           y: 0.0,
           duration: 4000,
         });
+
+        return anime({
+          duration: 500,
+        }).finished;
+      })
+      .then(() => {
+        //
       });
   };
 
   return (
     <group>
-      <group position-x={-2}>
-        <EngineModel></EngineModel>
+      <group ref={shakeEngine}>
+        <group position-x={-2}>
+          <EngineModel></EngineModel>
+        </group>
       </group>
 
       <group scale={5} position-y={2.5}>
@@ -717,7 +755,7 @@ function ReflectorScene({ mixBlur, depthScale, distortion, normalScale }) {
     <>
       <Reflector
         resolution={1024}
-        args={[10, 10]}
+        args={[20, 20]}
         mirror={0.99}
         mixBlur={mixBlur || 0}
         mixStrength={1}
@@ -752,8 +790,8 @@ function ReflectorScene({ mixBlur, depthScale, distortion, normalScale }) {
       ></gridHelper>
 
       <Box
-        args={[10, 10 / aspect, 0.2]}
-        position={[0, 10 / aspect / 2 + 0.05, -3]}
+        args={[20, 20 / aspect, 0.2]}
+        position={[0, 20 / aspect / 2 + 0.05, -5]}
       >
         <meshStandardMaterial metalness={1} roughness={0.2} map={shop} />
       </Box>
