@@ -409,16 +409,16 @@ function Bottle() {
     console.log(myprod);
     setBottle(myprod);
   }, []);
-
+  let shaking = false;
   useFrame((st, dt) => {
-    if (hovering) {
+    if (shaking) {
       if (ref.current) {
         ref.current.time = ref.current.time || 0;
         ref.current.time += dt;
-        // let time = ref.current.time * 35.0;
-        // ref.current.rotation.x = Math.sin(time) * 0.075;
-        // ref.current.rotation.y = Math.sin(time) * 0.075;
-        // ref.current.rotation.z = Math.sin(time) * 0.075;
+        let time = ref.current.time * 35.0;
+        ref.current.rotation.x = Math.sin(time) * 0.075;
+        ref.current.rotation.y = Math.sin(time) * 0.075;
+        ref.current.rotation.z = Math.sin(time) * 0.075;
       }
     } else {
       if (ref.current) {
@@ -442,27 +442,47 @@ function Bottle() {
     pourGroup.current.position.set(0, 0, 0);
     pourGroup.current.rotation.set(0, 0, 0);
 
-    //
-    anime({
-      targets: [cap.rotation],
-      y: 50,
-      duration: 8000,
-    });
-    anime({
-      targets: [cap.material],
-      opacity: 0.0,
-      duration: 8000,
-    });
-    cap.material.transparent = true;
-    anime({
-      targets: [cap.position],
-      y: 10.1,
-      duration: 4000,
-    });
-    anime({
-      duration: 1000,
-    })
-      .finished.then(() => {
+    shaking = true;
+
+    Promise.resolve()
+      .then(() => {
+        return anime({
+          duration: 1000,
+        }).finished;
+      })
+      .then(() => {
+        shaking = false;
+        return anime({
+          duration: 500,
+        }).finished;
+      })
+      .then(() => {
+        //
+        anime({
+          targets: [cap.rotation],
+          y: 50,
+          duration: 8000,
+        });
+
+        anime({
+          targets: [cap.material],
+          opacity: 0.0,
+          duration: 8000,
+        });
+
+        anime({
+          targets: [cap.position],
+          y: 10.1,
+          duration: 4000,
+        });
+
+        cap.material.transparent = true;
+
+        return anime({
+          duration: 1000,
+        }).finished;
+      })
+      .then(() => {
         anime({
           targets: [pourGroup.current.position],
           y: 5,
@@ -482,6 +502,48 @@ function Bottle() {
       .then(() => {
         //
         window.dispatchEvent(new CustomEvent("pours-engine-oil"));
+
+        return anime({
+          duration: 1000,
+        }).finished;
+      })
+      .then(() => {
+        anime({
+          targets: [pourGroup.current.position],
+          y: 0,
+          x: 0.0,
+          duration: 4000,
+          easing: "easeInOutQuad",
+        });
+        anime({
+          targets: [pourGroup.current.rotation],
+          z: 0,
+          duration: 4000,
+          easing: "easeInOutQuad",
+        });
+
+        return anime({
+          duration: 4000,
+        }).finished;
+      })
+      .then(() => {
+        anime({
+          targets: [cap.rotation],
+          y: 0,
+          duration: 8000,
+        });
+
+        anime({
+          targets: [cap.material],
+          opacity: 1.0,
+          duration: 8000,
+        });
+
+        anime({
+          targets: [cap.position],
+          y: 0.0,
+          duration: 4000,
+        });
       });
   };
 
@@ -513,11 +575,9 @@ function Bottle() {
               rotation-y={Math.PI * 0.5}
               onPointerEnter={() => {
                 document.body.style.cursor = "pointer";
-                setHover(true);
               }}
               onPointerLeave={() => {
                 document.body.style.cursor = "";
-                setHover(false);
               }}
               onPointerUp={() => {
                 // if (bottle) {
