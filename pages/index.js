@@ -527,9 +527,9 @@ function Bottle() {
         // shake
         anime({
           targets: [shakeEngine.current.rotation],
-          x: 0.0315,
-          y: 0.0315,
-          z: 0.0315,
+          x: 0.02,
+          y: 0.02,
+          z: 0.02,
           duration: 8000,
           easing: function (el, i, total) {
             return function (t) {
@@ -539,9 +539,9 @@ function Bottle() {
         }).finished.then(() => {
           anime({
             targets: [shakeEngine.current.rotation],
-            x: 0.0315,
-            y: 0.0315,
-            z: 0.0315,
+            x: 0.02,
+            y: 0.02,
+            z: 0.02,
             duration: 8000,
             easing: function (el, i, total) {
               return function (t) {
