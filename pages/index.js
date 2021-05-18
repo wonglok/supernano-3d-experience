@@ -2,38 +2,20 @@
 
 import Head from "next/head";
 import { getAllCollections, getProduct } from "nextjs-commerce-shopify";
-import {
-  Suspense,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Shopify } from "./_app";
-import {
-  Canvas,
-  useFrame,
-  useGraph,
-  useLoader,
-  useThree,
-} from "@react-three/fiber";
+import { Canvas, useFrame, useLoader, useThree } from "@react-three/fiber";
 import {
   Box,
-  CameraShake,
   Cylinder,
   OrbitControls,
   Reflector,
-  TorusKnot,
   useGLTF,
   useTexture,
-  Text,
   Sphere,
   Plane,
 } from "@react-three/drei";
 import {
-  BackSide,
-  Box3,
   Color,
   DoubleSide,
   MeshStandardMaterial,
@@ -44,7 +26,9 @@ import {
 } from "three";
 import { HDREnv } from "../pages-code/HDREnv/HDREnv";
 
-import { useControls } from "leva";
+// import anime from "animejs/lib/anime.es.js";
+
+// import { useControls } from "leva";
 
 // import { getProduct } from "nextjs-commerce-shopify";
 
@@ -228,6 +212,8 @@ function BGPlane() {
 //   );
 // }
 
+//
+
 function Bottle() {
   const ref = useRef();
   const [bottle, setBottle] = useState(false);
@@ -240,12 +226,14 @@ function Bottle() {
     res.traverse((item) => {
       if (item && item.isMesh) {
         if (item.name === "1") {
+          //
           item.material = new MeshStandardMaterial({
             roughness: 0.5,
             metalness: 0.3,
             color: new Color("#A0A7C0").offsetHSL(0, 0, 0.1),
           });
         }
+
         if (item.name === "3") {
           // cap
           item.material = new MeshStandardMaterial({
@@ -254,6 +242,7 @@ function Bottle() {
             color: new Color("#A0A7C0"),
           });
         }
+
         if (item.name === "5") {
           // cap ring
           item.material = new MeshStandardMaterial({
@@ -426,10 +415,10 @@ function Bottle() {
       if (ref.current) {
         ref.current.time = ref.current.time || 0;
         ref.current.time += dt;
-        let time = ref.current.time * 35.0;
-        ref.current.rotation.x = Math.sin(time) * 0.075;
-        ref.current.rotation.y = Math.sin(time) * 0.075;
-        ref.current.rotation.z = Math.sin(time) * 0.075;
+        // let time = ref.current.time * 35.0;
+        // ref.current.rotation.x = Math.sin(time) * 0.075;
+        // ref.current.rotation.y = Math.sin(time) * 0.075;
+        // ref.current.rotation.z = Math.sin(time) * 0.075;
       }
     } else {
       if (ref.current) {
@@ -440,66 +429,117 @@ function Bottle() {
     }
   });
 
+  const pourGroup = useRef();
+
+  let pourAnimation = () => {
+    let anime = require("animejs/lib/anime.es.js").default;
+    console.log(objBottle);
+    let cap = objBottle.getObjectByName("3");
+
+    cap.rotation.set(0, 0, 0);
+    cap.position.set(0, 0, 0);
+    cap.material.opacity = 1;
+    pourGroup.current.position.set(0, 0, 0);
+    pourGroup.current.rotation.set(0, 0, 0);
+
+    //
+    anime({
+      targets: [cap.rotation],
+      y: 50,
+      duration: 8000,
+    });
+    anime({
+      targets: [cap.material],
+      opacity: 0.0,
+      duration: 8000,
+    });
+    cap.material.transparent = true;
+    anime({
+      targets: [cap.position],
+      y: 10.1,
+      duration: 4000,
+    });
+    anime({
+      duration: 1000,
+    })
+      .finished.then(() => {
+        anime({
+          targets: [pourGroup.current.position],
+          y: 5,
+          x: 0.5,
+          duration: 8000,
+        });
+        anime({
+          targets: [pourGroup.current.rotation],
+          z: Math.PI * 0.6,
+          duration: 8000,
+        });
+
+        return anime({
+          duration: 4000,
+        }).finished;
+      })
+      .then(() => {
+        //
+        window.dispatchEvent(new CustomEvent("pours-engine-oil"));
+      });
+  };
+
   return (
     <group>
-      <group scale={5} position-y={2.3}>
-        {/* <Text
-          anchorX="center" // default
-          anchorY="middle" // default
-        >
-          {`SuperNano`}
-          <meshStandardMaterial
-            attach="material"
-            metalness={0.5}
-            roughness={0.5}
-            side={DoubleSide}
-          />
-        </Text> */}
+      <group position-x={-2}>
+        <EngineModel></EngineModel>
+      </group>
 
+      <group scale={5} position-y={2.5}>
+        {/* title */}
         <Plane position-y={0.3} args={[0.5, 0.5 / (876.87 / 424.816)]}>
           <meshStandardMaterial
             transparent={true}
             map={nanowhite}
             side={DoubleSide}
             metalness={0.5}
-            roughness={0.1}
+            roughness={0.3}
           ></meshStandardMaterial>
         </Plane>
       </group>
 
-      <group ref={ref}>
-        <RotateY speed={1}>
-          <Cylinder
-            args={[0.45, 0.45, 1.8, 32, 1, true]}
-            position={[0, 1.35, 0]}
-            rotation-y={Math.PI * 0.5}
-            onPointerEnter={() => {
-              document.body.style.cursor = "pointer";
-              setHover(true);
-            }}
-            onPointerLeave={() => {
-              document.body.style.cursor = "";
-              setHover(false);
-            }}
-            onPointerUp={() => {
-              if (bottle) {
-                window.location.assign(bottle.onlineStoreUrl);
-              }
-            }}
-          >
-            <meshStandardMaterial
-              side={DoubleSide}
-              transparent={true}
-              metalness={0.9}
-              roughness={0.2}
-              ref={fresnel}
-            />
-          </Cylinder>
+      <group ref={pourGroup}>
+        <group ref={ref}>
+          <RotateY speed={1}>
+            <Cylinder
+              args={[0.45, 0.45, 1.8, 32, 1, true]}
+              position={[0, 1.35, 0]}
+              rotation-y={Math.PI * 0.5}
+              onPointerEnter={() => {
+                document.body.style.cursor = "pointer";
+                setHover(true);
+              }}
+              onPointerLeave={() => {
+                document.body.style.cursor = "";
+                setHover(false);
+              }}
+              onPointerUp={() => {
+                // if (bottle) {
+                //   window.location.assign(bottle.onlineStoreUrl);
+                // }
+                pourAnimation();
+              }}
+            >
+              <meshStandardMaterial
+                side={DoubleSide}
+                transparent={true}
+                metalness={0.9}
+                roughness={0.2}
+                ref={fresnel}
+              />
+            </Cylinder>
 
-          <group position={[0, 0.3, 0]}>
-            <primitive scale={0.025} object={objBottle}></primitive>
-          </group>
-        </RotateY>
+            <group position={[0, 0.3, 0]}>
+              <primitive scale={0.025} object={objBottle}></primitive>
+            </group>
+          </RotateY>
+        </group>
       </group>
 
       {/* <RotateY speed={1.5}>
@@ -537,6 +577,42 @@ function Bottle() {
   );
 }
 
+function EngineModel() {
+  let { nodes } = useGLTF("/glb/engine-5.glb");
+
+  let out = useMemo(() => {
+    let cloned = nodes.Scene.clone();
+    cloned.traverse((item) => {
+      // item.
+      //
+      if (item && item.material) {
+        item.geometry.computeVertexNormals();
+        item.material = new MeshStandardMaterial({
+          //
+
+          metalness: 1.0,
+          roughness: 0.1,
+        });
+
+        console.log(item.position.y);
+      }
+    });
+    return cloned;
+  }, [nodes.Scene]);
+
+  //
+  //
+  return (
+    <group position-y={1.3} position-x={-0.5}>
+      <primitive
+        rotation-y={Math.PI * 0.75}
+        scale={0.03}
+        object={out}
+      ></primitive>
+    </group>
+  );
+}
+
 function ReflectorScene({ mixBlur, depthScale, distortion, normalScale }) {
   const shop = useTexture("/textures/shop.png");
   const distortionMap = useTexture("/textures/dist_map.jpg");
@@ -551,7 +627,7 @@ function ReflectorScene({ mixBlur, depthScale, distortion, normalScale }) {
   const { scene, camera } = useThree();
   useEffect(() => {
     camera.position.x = 0;
-    camera.position.y = 1.3;
+    camera.position.y = 3.3;
     camera.position.z = 5.5;
     scene.background = new Color("#000000");
   }, []);
@@ -622,7 +698,9 @@ function ReflectorScene({ mixBlur, depthScale, distortion, normalScale }) {
         <meshStandardMaterial metalness={1} roughness={0.2} map={shop} />
       </Box>
 
-      <Bottle></Bottle>
+      <group position-x={2}>
+        <Bottle></Bottle>
+      </group>
 
       {/* <Logo></Logo> */}
 
