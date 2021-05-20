@@ -677,7 +677,8 @@ function Bottle() {
 
 function EngineModel() {
   let { nodes } = useGLTF("/glb/engine-5.glb");
-
+  // let rustNormal = useTexture("/textures/Metal_Rusted_001_NRM.jpg");
+  // let rustMetalic = useTexture("/textures/Metal_006_Metallic.jpg");
   let out = useMemo(() => {
     let cloned = nodes.Scene.clone();
     cloned.traverse((item) => {
@@ -687,7 +688,7 @@ function EngineModel() {
         item.geometry.computeVertexNormals();
         item.material = new MeshStandardMaterial({
           //
-
+          // normalMap: rustNormal,
           metalness: 1.0,
           roughness: 0.1,
         });
@@ -698,8 +699,6 @@ function EngineModel() {
     return cloned;
   }, [nodes.Scene]);
 
-  //
-  //
   return (
     <group position-y={1.3} position-x={-0.5}>
       <primitive
